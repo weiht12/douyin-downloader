@@ -1,0 +1,9 @@
+node_modules/
+downloads/
+*.log
+diag.js
+*.bat
+*.ps1
+.env
+.DS_Store
+

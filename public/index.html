@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>抖音下载器</title>
+  <style>
+    :root {
+      --primary: #fe2c55;
+      --primary-dark: #d4002a;
+      --bg: #0a0a0a;
+      --card: #161616;
+      --card2: #1e1e1e;
+      --border: #2a2a2a;
+      --text: #f0f0f0;
+      --text2: #888;
+      --success: #25d366;
+      --blue: #3d85ff;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; min-height: 100vh; }
+
+    /* Header */
+    .header {
+      background: #111; border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; gap: 12px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-logo {
+      font-size: 20px; font-weight: 700; color: var(--primary);
+      letter-spacing: -0.5px; flex-shrink: 0;
+    }
+    .header-title {
+      font-size: 14px; color: var(--text2); margin-left: 4px;
+      padding-left: 12px; border-left: 1px solid var(--border);
+    }
+    .header-tip {
+      margin-left: auto; font-size: 12px; color: var(--text2);
+      background: var(--card2); padding: 4px 10px; border-radius: 20px;
+    }
+
+    /* Container */
+    .container { max-width: 860px; margin: 0 auto; padding: 28px 16px; }
+
+    /* Input Area */
+    .input-area {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 24px;
+    }
+    .input-label {
+      font-size: 13px; color: var(--text2); margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .input-box {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 16px; color: var(--text);
+      font-size: 15px; outline: none; transition: border-color 0.2s;
+    }
+    .input-box:focus { border-color: var(--primary); }
+    .input-hint {
+      font-size: 11px; color: var(--text2); margin-top: 8px;
+    }
+
+    /* Cards Grid */
+    .cards {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px; margin-bottom: 24px;
+    }
+    @media (max-width: 640px) {
+      .cards { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+    .card:active { transform: translateY(0); }
+    .card.disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+
+    .card-bar { height: 4px; }
+    .card[data-type="video"] .card-bar { background: var(--primary); }
+    .card[data-type="cover"] .card-bar { background: var(--blue); }
+    .card[data-type="audio"] .card-bar { background: var(--success); }
+
+    .card-body { padding: 18px 20px 20px; }
+    .card-icon { font-size: 28px; margin-bottom: 10px; }
+    .card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .card[data-type="video"] .card-title { color: var(--primary); }
+    .card[data-type="cover"] .card-title { color: var(--blue); }
+    .card[data-type="audio"] .card-title { color: var(--success); }
+    .card-desc { font-size: 12px; color: var(--text2); line-height: 1.5; }
+
+    /* Video Info */
+    .video-info {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 24px;
+      display: none;
+    }
+    .video-info.show { display: block; }
+    .video-info-header { display: flex; gap: 14px; align-items: flex-start; }
+    .video-thumb {
+      width: 120px; height: 80px; object-fit: cover; border-radius: 8px;
+      background: var(--card2); flex-shrink: 0;
+    }
+    .video-meta { flex: 1; min-width: 0; }
+    .video-title { font-size: 15px; font-weight: 600; margin-bottom: 6px;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; }
+    .video-author { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
+    .video-duration { font-size: 12px; color: var(--text2); }
+
+    /* Status */
+    .status {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px;
+      display: none; font-size: 14px; line-height: 1.6;
+    }
+    .status.show { display: block; }
+    .status.error { border-color: var(--primary); color: var(--primary); }
+    .status.success { border-color: var(--success); color: var(--success); }
+    .status.loading { border-color: #f5a623; color: #f5a623; }
+
+    /* Downloaded Files */
+    .files {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 20px;
+    }
+    .files-title {
+      font-size: 14px; color: var(--text2); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .file-list { display: flex; flex-direction: column; gap: 6px; }
+    .file-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; background: var(--card2); border-radius: 8px;
+      font-size: 13px;
+    }
+    .file-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-size { color: var(--text2); flex-shrink: 0; }
+    .file-del {
+      background: none; border: none; color: var(--text2); cursor: pointer;
+      font-size: 16px; padding: 2px 4px; border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .file-del:hover { color: var(--primary); }
+    .file-download {
+      background: none; border: none; color: var(--success); cursor: pointer;
+      font-size: 14px; padding: 2px 6px; border-radius: 4px;
+      transition: opacity 0.15s; text-decoration: none; flex-shrink: 0;
+    }
+    .file-download:hover { opacity: 0.7; }
+
+    .empty { text-align: center; color: var(--text2); font-size: 13px; padding: 20px 0; }
+
+    /* Loading spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block; width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.3); border-top-color: currentColor;
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+
+    /* Footer */
+    .footer { text-align: center; color: var(--text2); font-size: 11px; padding: 24px 0; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">🎵</div>
+  <div class="header-title">抖音下载器</div>
+  <div class="header-tip">无需登录 · 即粘即用</div>
+</div>
+
+<div class="container">
+  <!-- 输入框 -->
+  <div class="input-area">
+    <div class="input-label">📋 粘贴抖音分享链接</div>
+    <input class="input-box" id="urlInput" type="text" placeholder="https://v.douyin.com/xxxxx 或「标题」 https://v.douyin.com/xxxxx">
+    <div class="input-hint">支持短链接、长链接，粘贴后直接点击下方功能按钮即可下载</div>
+  </div>
+
+  <!-- 三个功能卡片 -->
+  <div class="cards">
+    <div class="card" data-type="video" id="cardVideo">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <div class="card-icon">🎬</div>
+        <div class="card-title">下载视频</div>
+        <div class="card-desc">高清无水印<br>MP4 格式</div>
+      </div>
+    </div>
+    <div class="card" data-type="cover" id="cardCover">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <div class="card-icon">🖼️</div>
+        <div class="card-title">下载封面</div>
+        <div class="card-desc">视频封面图<br>JPG 格式</div>
+      </div>
+    </div>
+    <div class="card" data-type="audio" id="cardAudio">
+      <div class="card-bar"></div>
+      <div class="card-body">
+        <div class="card-icon">🎵</div>
+        <div class="card-title">提取音频</div>
+        <div class="card-desc">背景音乐/声音<br>MP3 格式</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 视频信息 -->
+  <div class="video-info" id="videoInfo">
+    <div class="video-info-header">
+      <img class="video-thumb" id="videoThumb" src="" alt="封面">
+      <div class="video-meta">
+        <div class="video-title" id="videoTitle"></div>
+        <div class="video-author" id="videoAuthor"></div>
+        <div class="video-duration" id="videoDuration"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 状态提示 -->
+  <div class="status" id="status"></div>
+
+  <!-- 已下载文件 -->
+  <div class="files">
+    <div class="files-title">📁 已下载文件</div>
+    <div class="file-list" id="fileList">
+      <div class="empty">暂无下载文件</div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  文件保存在 douyin-downloader/downloads 文件夹 · 部分视频可能因版权无法下载属正常现象
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const urlInput = $('urlInput');
+  const videoInfo = $('videoInfo');
+  const status = $('status');
+  const fileList = $('fileList');
+
+  // 从粘贴内容中提取 URL
+  function extractUrl(text) {
+    const m = text.match(/(https?:\/\/[^\s\u4e00-\u9fff\uff00-\uffef，。！？]+)/);
+    if (!m) return text.trim();
+    // 去掉尾部所有标点符号 + 斜杠
+    return m[1].replace(/[，。！？.!?\/\\]+$/, '');
+  }
+
+  // 自动清洗粘贴内容
+  urlInput.addEventListener('paste', () => {
+    setTimeout(() => {
+      const raw = urlInput.value;
+      const cleaned = extractUrl(raw);
+      if (cleaned !== raw) urlInput.value = cleaned;
+    }, 0);
+  });
+
+  // 格式化文件大小
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    return (bytes / 1024 / 1024 / 1024).toFixed(2) + ' GB';
+  }
+
+  // 格式化时长
+  function formatDuration(s) {
+    if (!s || s <= 0) return '';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  // 显示状态
+  function showStatus(msg, type) {
+    status.textContent = msg;
+    status.className = 'status show ' + (type || '');
+  }
+
+  // 解析视频信息
+  async function parseVideo() {
+    const raw = urlInput.value.trim();
+    if (!raw) { showStatus('请先粘贴抖音链接', 'error'); return null; }
+    const url = extractUrl(raw);
+
+    showStatus('<span class="spinner"></span> 正在解析视频信息...', 'loading');
+    videoInfo.classList.remove('show');
+
+    try {
+      const r = await fetch('/api/parse', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      if (!r.ok) {
+        const data = await r.json();
+        showStatus('❌ 解析失败：' + (data.error || '未知错误'), 'error');
+        return null;
+      }
+      const data = await r.json();
+      if (data.error) {
+        showStatus('❌ 解析失败：' + data.error, 'error');
+        return null;
+      }
+
+      // 显示视频信息
+      $('videoTitle').textContent = data.title || '未知标题';
+      $('videoAuthor').textContent = '👤 ' + (data.uploader || '未知作者');
+      $('videoDuration').textContent = data.duration ? '⏱️ ' + formatDuration(data.duration) : '';
+      if (data.thumbnail) $('videoThumb').src = data.thumbnail;
+      $('videoThumb').style.display = data.thumbnail ? 'block' : 'none';
+      videoInfo.classList.add('show');
+
+      status.classList.remove('show');
+      return url;
+    } catch (e) {
+      showStatus('❌ 网络错误：' + e.message, 'error');
+      return null;
+    }
+  }
+
+  // 下载
+  async function download(type) {
+    const url = await parseVideo();
+    if (!url) return;
+
+    const labels = { video: '视频', cover: '封面', audio: '音频' };
+    showStatus(`<span class="spinner"></span> 正在下载${labels[type]}...`, 'loading');
+
+    try {
+      const endpoint = `/api/download/${type}`;
+      const r = await fetch(endpoint, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await r.json();
+
+      if (!r.ok || data.error) {
+        showStatus('❌ 下载失败：' + (data.error || '未知错误'), 'error');
+      } else {
+        showStatus('✅ ' + labels[type] + '下载完成！', 'success');
+        renderFiles(data.downloads || []);
+      }
+    } catch (e) {
+      showStatus('❌ 网络错误：' + e.message, 'error');
+    }
+  }
+
+  // 点击卡片
+  $('cardVideo').addEventListener('click', () => download('video'));
+  $('cardCover').addEventListener('click', () => download('cover'));
+  $('cardAudio').addEventListener('click', () => download('audio'));
+
+  // 渲染文件列表
+  function renderFiles(files) {
+    if (!files || files.length === 0) {
+      fileList.innerHTML = '<div class="empty">暂无下载文件</div>';
+      return;
+    }
+    fileList.innerHTML = files.map(f => `
+      <div class="file-item">
+        <span class="file-name" title="${f.name}">${f.name}</span>
+        <span class="file-size">${formatSize(f.size)}</span>
+        <a class="file-download" href="/downloads/${encodeURIComponent(f.name)}" target="_blank" title="下载">⬇</a>
+        <button class="file-del" onclick="deleteFile('${f.name.replace(/'/g, "\\'")}')" title="删除">✕</button>
+      </div>
+    `).join('');
+  }
+
+  // 删除文件
+  async function deleteFile(name) {
+    if (!confirm('确定删除 ' + name + '？')) return;
+    try {
+      const r = await fetch(`/api/downloads/${encodeURIComponent(name)}`, { method: 'DELETE' });
+      const data = await r.json();
+      renderFiles(data.downloads || []);
+    } catch (e) {
+      alert('删除失败：' + e.message);
+    }
+  }
+
+  // 启动时加载文件列表
+  (async () => {
+    try {
+      const r = await fetch('/api/downloads');
+      const data = await r.json();
+      renderFiles(data.files || []);
+    } catch (e) {}
+  })();
+</script>
+
+</body>
+</html>

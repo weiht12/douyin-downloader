@@ -1,0 +1,16 @@
+{
+  "name": "douyin-downloader",
+  "version": "1.0.0",
+  "description": "抖音视频下载工具",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  }
+}

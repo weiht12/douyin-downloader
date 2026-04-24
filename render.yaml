@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: douyin-downloader
+    env: node
+    region: singapore  # 或 oregon / frankfurt
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    healthCheckPath: /
+    disk:
+      name: downloads
+      mountPath: /var/data/downloads
+      sizeGB: 1
