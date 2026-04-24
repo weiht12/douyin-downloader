@@ -6,7 +6,8 @@ const dy = require('./douyin.js');
 
 const app = express();
 const PORT = process.env.PORT || 3456;
-const DOWNLOADS_DIR = process.env.DISK ? '/var/data/downloads' : path.join(__dirname, 'downloads');
+// Render 免费版用 /tmp，付费版用挂载的磁盘，本地用项目目录
+const DOWNLOADS_DIR = process.env.RENDER ? '/tmp/downloads' : path.join(__dirname, 'downloads');
 
 if (!fs.existsSync(DOWNLOADS_DIR)) fs.mkdirSync(DOWNLOADS_DIR, { recursive: true });
 
